@@ -1,7 +1,26 @@
+"""
+This code is to explore how the bubble sort algorithm works
+and how it takes more time to run the bigger the problem it works on.
+It should do a few runs for each size of array.
+It should keep track of how many numbers were sorted
+And it should store how long it took to complete the task.
+
+The code should then turn around and create a CSV file with the data
+The CSV file should have the following columns:
+- Run Index
+- Size of Array
+- Time Taken (seconds)
+
+The code should then read the data from the CSV file and make a new CSV file that includes
+the best, the worst, and the average time taken for each size of array and the standard deviation of the batch
+The file should be comma separated
+
+"""
+
 # general import statements to pull in outside libraries
 import random # for generating random numbers
 import time # for timing the code
-import matplotlib.pyplot as plt # for plotting the graph
+
 
 # Generate an array of random numbers between some lower and upper limit and store them in an array called random_ints
 def generate_random_number_array(lower_number_range, upper_number_range, total_number_count):
@@ -25,15 +44,15 @@ def bubble_sort(arr):
     n = len(arr)
     
     # Traverse through all elements in the array
-    for i in range(n):
+    for outer_loop_index in range(n):
         # Flag to optimize if already sorted
         swapped = False
         
         # Last i elements are already in place, no need to traverse them again
-        for j in range(0, n-i-1):
+        for inner_loop_single_pass_index in range(0, n-outer_loop_index-1):
             # Swap if the element found is greater than the next element
-            if arr[j] > arr[j+1]:
-                arr[j], arr[j+1] = arr[j+1], arr[j]  # Swap
+            if arr[inner_loop_single_pass_index] > arr[inner_loop_single_pass_index+1]:
+                arr[inner_loop_single_pass_index], arr[inner_loop_single_pass_index+1] = arr[inner_loop_single_pass_index+1], arr[inner_loop_single_pass_index]  # Swap
                 swapped = True
         
         # If no two elements were swapped, the array is already sorted
@@ -43,26 +62,42 @@ def bubble_sort(arr):
 if __name__ == '__main__':
     # Calculate the average time taken for sorting an array of a given size
     # set up the different sizes we are going to search and soft through.
-    array_sizes = [100, 500, 1000]
+    array_sizes = [10, 25, 50]
 
     # set up the number of trials we are going to run for each size
-    nummber_of_trials_per_size = 5
+    nummber_of_trials_per_size = 3
+
+    # create a dictionary to store the data. the key will be the size of the array for the first dictionary.
+    # the value of the first dictionary will be another dictionary with the following key value pairs:
+    # trial number with a value of the time taken to sort the array
+
+    data_dict = {}
+    for size in array_sizes:
+        data_dict[size] = {}
+        for trial_number in range(nummber_of_trials_per_size):
+            data_dict[size][trial_number] = 0
 
     for size in array_sizes:
         # Generate an array of random numbers
         lower_number_range = 0
         upper_number_range = 100 * size
-        random_numbers = generate_random_number_array(lower_number_range, upper_number_range, size)
         
+
         # Calculate the time taken for bubble_sort function
-        start_time = time.time()
+        
         for run_index in range(nummber_of_trials_per_size):
+            random_numbers = generate_random_number_array(lower_number_range, upper_number_range, size)
+        
+            print_random_number_array(random_numbers, size)
+
+            start_time = time.time()
             bubble_sort(random_numbers)
             end_time = time.time()
         
             # Calculate the elapsed time
             elapsed_time = end_time - start_time
             print("Time taken for size", size, ":", elapsed_time, "seconds")
+            data_dict[size][run_index] = elapsed_time
 
             # write data to a CSV file called bubble_sort_data.csv
             # the first time the file is created, it should add headers to the file
@@ -73,73 +108,46 @@ if __name__ == '__main__':
             # the file should be opened in append mode
             # Headers include, run index, size of array, time taken in seconds, rounded to 3 decimal places
             
+            print('writing raw data to a CSV file')
             # Write the data to a CSV file
             with open('bubble_sort_data.csv', 'a') as file:
                 if run_index == 0:
                     file.write('Run Index, Size of Array, Time Taken (seconds)\n')
                 file.write(str(run_index) + ',' + str(size) + ',' + str(round(elapsed_time, 3)) + '\n')
 
+   
 
+    # use the data dictionary.
+    # work through each size of array and calculate the best, worst, average, and standard deviation of the time taken
+    # write this to a new data dictionary called summary_data_dict
 
-    # Read the data from the CSV file and make a new CSV file that includes
-    # the best, the worst, and the average time taken for each size of array and the standard deviation of the batch
-    # the file should be comma separated
-
-    # Read the data from the CSV file
-    with open('bubble_sort_data.csv', 'r') as file:
-        lines = file.readlines()
-        data = []
-        for line in lines[1:]:
-            data.append(line.strip().split(','))
-
-    # Calculate the best, worst, average time taken for each size of array
-    best_times = {}
-    worst_times = {}
-    average_times = {}
-    standard_deviations = {}
+    summary_data_dict = {}
     for size in array_sizes:
-        times = []
-        for line in data:
-            if int(line[1]) == size:
-                times.append(float(line[2]))
-        best_times[size] = min(times)
-        worst_times[size] = max(times)
-        average_times[size] = sum(times) / len(times)
-        standard_deviations[size] = (sum([(time - average_times[size]) ** 2 for time in times]) / len(times)) ** 0.5
+        summary_data_dict[size] = {}
+        summary_data_dict[size]['best'] = min(data_dict[size].values())
+        summary_data_dict[size]['worst'] = max(data_dict[size].values())
+        summary_data_dict[size]['average'] = sum(data_dict[size].values()) / nummber_of_trials_per_size
+        summary_data_dict[size]['standard_deviation'] = 0
 
-    # Write the best, worst, average time taken for each size of array and the standard deviation of the batch to a new CSV file
-    with open('bubble_sort_summary.csv', 'w') as file:
-        file.write('Size of Array, Best Time (seconds), Worst Time (seconds), Average Time (seconds), Standard Deviation\n')
-        for size in array_sizes:
-            file.write(str(size) + ',' + str(round(best_times[size], 3)) + ',' + str(round(worst_times[size], 3)) + ',' + str(round(average_times[size], 3)) + ',' + str(round(standard_deviations[size], 3) + '\n'))
+        # Calculate the standard deviation
+        for trial_number in range(nummber_of_trials_per_size):
+            summary_data_dict[size]['standard_deviation'] += (data_dict[size][trial_number] - summary_data_dict[size]['average']) ** 2
+        summary_data_dict[size]['standard_deviation'] = (summary_data_dict[size]['standard_deviation'] / nummber_of_trials_per_size) ** 0.5
 
+    
+    print('start graphing the summary data')
 
+ 
+    # make a plot with two subplots.  
+    # the first subplot should be a scatter plot of the raw data.
+    # the x-axis should be the size of the array
+    # the y-axis should be the time taken to sort the array
 
-    # Create a figure with two subplots side by side
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    # the second subplot should be a whisker plot of the summary data
+    # the x-axis should be the size of the array
+    # the y-axis should be the best, worst, average, and standard deviation of the time taken to sort the array
 
-    # First subplot
-    for size in array_sizes:
-        times = []
-        for line in data:
-            if int(line[1]) == size:
-                times.append(float(line[2]))
-        axs[0].scatter([size] * len(times), times)
-    axs[0].set_xlabel('Size of Array')
-    axs[0].set_ylabel('Time Taken (seconds)')
-    axs[0].set_title('Time taken for Bubble Sort')
+    # the plot should be saved as a PNG file called bubble_sort_summary.png
 
-    # Second subplot
-    axs[1].scatter(list(best_times.keys()), list(best_times.values()), label='Best Time', color='red')
-    axs[1].scatter(list(worst_times.keys()), list(worst_times.values()), label='Worst Time', color='blue')
-    axs[1].scatter(list(average_times.keys()), list(average_times.values()), label='Average Time', color='green')
-    axs[1].errorbar(list(average_times.keys()), list(average_times.values()), yerr=list(standard_deviations.values()), fmt='o', label='Standard Deviation', color='black')
-    axs[1].set_xlabel('Size of Array')
-    axs[1].set_ylabel('Time Taken (seconds)')
-    axs[1].set_title('Time taken for Bubble Sort')
-    axs[1].legend()
-
-    # Display the figure
-    plt.tight_layout()
-    plt.show()
-
+    import matplotlib.pyplot as plt # type: ignore
+    
