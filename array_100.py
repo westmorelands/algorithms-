@@ -1,5 +1,17 @@
 # Generate an array of 100 random floating-point numbers between -10 and 10
-random_floats = [random.uniform(-10, 10) for _ in range(100)]
+upper_number_range = 10
+lower_number_range = -10
+random_floats = []
+total_number_count = 100
+for some_number in range (total_number_count):
+    random_number = random.uniform(lower_number_range, upper_number_range)
+    random_floats.append(random_number)
+
+#print off the random numbers, 20 per line
+for our_number in range(total_number_count):
+    print(random_floats[our_number], end = " ")
+    if (our_number + 1) % 20 == 0:
+        print()
 
 print(random_floats)
 def bubble_sort(arr):
